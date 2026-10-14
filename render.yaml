@@ -1,0 +1,25 @@
+# Render Blueprint: the free WhatsApp gateway for Ekaksh EPOS. Free plan, no card needed.
+# Render asks for DATABASE_URL and GATEWAY_SECRET when you apply it:
+#   DATABASE_URL   = the Supabase SESSION pooler URL (port 5432), same as EPOS on Vercel
+#   GATEWAY_SECRET = the same value as WA_GATEWAY_SECRET on Vercel
+services:
+  - type: web
+    name: epos-wa-gateway
+    runtime: node
+    plan: free
+    region: singapore
+    buildCommand: npm install --omit=dev
+    startCommand: node index.js
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: DATABASE_URL
+        sync: false
+      - key: GATEWAY_SECRET
+        sync: false
+      - key: DB_SCHEMA
+        value: tenant_ekaksh
+      - key: EPOS_URL
+        value: https://epos-pi.vercel.app
+      - key: NODE_VERSION
+        value: "22"
