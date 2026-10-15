@@ -17,6 +17,15 @@
  * HTTP: GET /health only (Supabase pg_cron pings it every 10 minutes so the free instance never sleeps).
  */
 const http = require("node:http");
+const fs = require("node:fs");
+const path = require("node:path");
+// A .env file next to this script is read when present (for running on an office PC without Render).
+try {
+  for (const line of fs.readFileSync(path.join(__dirname, ".env"), "utf8").split(/\r?\n/)) {
+    const m = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*?)\s*$/);
+    if (m && !(m[1] in process.env)) process.env[m[1]] = m[2].replace(/^["']|["']$/g, "");
+  }
+} catch {}
 const { Pool } = require("pg");
 const pino = require("pino");
 const QRCode = require("qrcode");
