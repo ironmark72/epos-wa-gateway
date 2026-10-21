@@ -290,8 +290,15 @@ async function claim() {
       limit 1
       for update skip locked
     )
-    returning id, "to", body, kind, attempts`);
+    returning id, "to", body, kind, attempts, "mediaUrl", "fileName", "mimeType"`);
   return rows[0] || null;
+}
+
+/** Fetch a document EPOS wants attached (a quotation PDF, for instance). */
+async function fetchMedia(url) {
+  const res = await fetch(url, { signal: AbortSignal.timeout(60_000) });
+  if (!res.ok) throw new Error(`document download failed (${res.status})`);
+  return Buffer.from(await res.arrayBuffer());
 }
 
 async function sendOne(m) {
@@ -305,7 +312,10 @@ async function sendOne(m) {
   await sock.sendPresenceUpdate("composing", jid).catch(() => {});
   await sleep(Math.min(3000, 800 + m.body.length * 10));
   await sock.sendPresenceUpdate("paused", jid).catch(() => {});
-  const res = await sock.sendMessage(jid, { text: m.body });
+  // With a document attached, the text rides along as its caption.
+  const res = m.mediaUrl
+    ? await sock.sendMessage(jid, { document: await fetchMedia(m.mediaUrl), mimetype: m.mimeType || "application/pdf", fileName: m.fileName || "document.pdf", caption: m.body })
+    : await sock.sendMessage(jid, { text: m.body });
   return res?.key?.id ?? null;
 }
 
